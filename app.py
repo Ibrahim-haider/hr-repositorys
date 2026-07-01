@@ -358,29 +358,37 @@ init_db()
 st.markdown(
     f"""
     <style>
-    .stApp {{ background: {BG}; color: {TEXT}; }}
-    .block-container {{ padding-top: 1.3rem; }}
-    h1, h2, h3, h4, h5, h6, p, label, span, div {{ color: {TEXT} !important; }}
-    .topbar {{ background:linear-gradient(135deg,#111827,#1E3A8A); color:white; padding:18px 24px; border-radius:16px; margin-bottom:18px; border:1px solid #334155; }}
-    .brand {{ font-size:24px; font-weight:800; }}
-    .subtitle {{ color:#DDE6F3 !important; font-size:14px; margin-top:4px; }}
-    .card {{ background:{CARD}; padding:18px; border-radius:16px; border:1px solid #374151; box-shadow:0 8px 24px rgba(0,0,0,.20); }}
-    .metric-title {{ color:{MUTED} !important; font-size:13px; }}
-    .metric-value {{ color:#93C5FD !important; font-size:30px; font-weight:800; }}
-    .status {{ padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }}
+    :root {{ --primary:#2563EB; --accent:#F59E0B; --bg:#0F172A; --card:#111827; --text:#E5E7EB; --muted:#9CA3AF; }}
+    .stApp {{ background: radial-gradient(circle at top left, #1e3a8a 0, #0f172a 30%, #020617 100%); color: var(--text); }}
+    .block-container {{ padding-top: 1.2rem; padding-bottom: 3rem; max-width: 1280px; }}
+    h1, h2, h3, h4, h5, h6, p, label, span, div {{ color: var(--text) !important; }}
+    .hero {{ background: linear-gradient(135deg, rgba(37,99,235,.25), rgba(245,158,11,.12)); border:1px solid rgba(148,163,184,.25); padding:28px; border-radius:24px; box-shadow:0 20px 50px rgba(0,0,0,.28); margin-bottom:20px; }}
+    .hero-title {{ font-size:38px; line-height:1.1; font-weight:900; margin-bottom:8px; }}
+    .hero-subtitle {{ color:#CBD5E1 !important; font-size:16px; max-width:760px; }}
+    .topbar {{ background:rgba(15,23,42,.82); backdrop-filter:blur(10px); color:white; padding:18px 24px; border-radius:18px; margin-bottom:18px; border:1px solid rgba(148,163,184,.25); box-shadow:0 12px 35px rgba(0,0,0,.25); }}
+    .brand {{ font-size:24px; font-weight:900; letter-spacing:-.02em; }}
+    .subtitle {{ color:#CBD5E1 !important; font-size:14px; margin-top:4px; }}
+    .card {{ background:rgba(17,24,39,.86); padding:18px; border-radius:18px; border:1px solid rgba(148,163,184,.22); box-shadow:0 14px 36px rgba(0,0,0,.24); }}
+    .feature-card {{ min-height:120px; }}
+    .metric-card {{ background:linear-gradient(180deg,rgba(30,41,59,.92),rgba(17,24,39,.92)); padding:18px; border-radius:18px; border:1px solid rgba(148,163,184,.22); box-shadow:0 10px 28px rgba(0,0,0,.20); }}
+    .metric-title {{ color:#A7B0C3 !important; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }}
+    .metric-value {{ color:#93C5FD !important; font-size:34px; font-weight:900; margin-top:4px; }}
+    .muted {{ color:#94A3B8 !important; }}
+    .status {{ padding:5px 12px; border-radius:999px; font-weight:800; font-size:12px; display:inline-block; }}
     .pending {{ background:#78350F; color:#FDE68A !important; }}
     .approved {{ background:#064E3B; color:#A7F3D0 !important; }}
     .rejected {{ background:#7F1D1D; color:#FECACA !important; }}
     .changes {{ background:#312E81; color:#C7D2FE !important; }}
-    [data-testid="stSidebar"] {{ background-color:#111827; }}
+    [data-testid="stSidebar"] {{ background-color:#0B1220; border-right:1px solid rgba(148,163,184,.16); }}
     [data-testid="stSidebar"] * {{ color:#F9FAFB !important; }}
-    .stTextInput input, .stTextArea textarea, .stDateInput input, .stNumberInput input {{ background-color:#1F2937 !important; color:#F9FAFB !important; border:1px solid #4B5563 !important; border-radius:10px !important; }}
-    div[data-baseweb="select"] > div {{ background-color:#1F2937 !important; border:1px solid #4B5563 !important; border-radius:10px !important; }}
+    .stTextInput input, .stTextArea textarea, .stDateInput input, .stNumberInput input {{ background-color:#111827 !important; color:#F9FAFB !important; border:1px solid #475569 !important; border-radius:11px !important; }}
+    div[data-baseweb="select"] > div {{ background-color:#111827 !important; border:1px solid #475569 !important; border-radius:11px !important; }}
     div[data-baseweb="select"] * {{ color:#F9FAFB !important; }}
-    .stButton button {{ background-color:#2563EB !important; color:white !important; border-radius:10px !important; border:none !important; font-weight:700; }}
-    .stButton button:hover {{ background-color:#1D4ED8 !important; }}
-    [data-testid="stDataFrame"], [data-testid="stMetric"] {{ background-color:{CARD} !important; border-radius:14px; }}
-    .stAlert {{ background-color:#1F2937 !important; color:#F9FAFB !important; }}
+    .stButton button {{ background:linear-gradient(135deg,#2563EB,#1D4ED8) !important; color:white !important; border-radius:12px !important; border:none !important; font-weight:800; box-shadow:0 8px 20px rgba(37,99,235,.25); }}
+    .stButton button:hover {{ transform:translateY(-1px); filter:brightness(1.08); }}
+    [data-testid="stDataFrame"], [data-testid="stMetric"] {{ background-color:#111827 !important; border-radius:14px; }}
+    .stAlert {{ background-color:#111827 !important; color:#F9FAFB !important; border:1px solid rgba(148,163,184,.22); }}
+    hr {{ border-color:rgba(148,163,184,.22); }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -401,19 +409,25 @@ def header():
 
 
 def login_screen():
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 1.2, 1])
+    st.markdown("""
+    <div class='hero'>
+      <div class='hero-title'>JW SEZ Digital Employee Onboarding Portal</div>
+      <div class='hero-subtitle'>A proof-of-concept system that converts paper-based onboarding into a secure workflow: employee form submission, HR review, approval, employee database, and analytics.</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    f1, f2, f3 = st.columns(3)
+    with f1:
+        st.markdown("<div class='card feature-card'><h4>👤 Employee Portal</h4><p class='muted'>Employees fill onboarding forms and upload documents themselves.</p></div>", unsafe_allow_html=True)
+    with f2:
+        st.markdown("<div class='card feature-card'><h4>✅ HR Review</h4><p class='muted'>HR can approve, reject, or request corrections with notes.</p></div>", unsafe_allow_html=True)
+    with f3:
+        st.markdown("<div class='card feature-card'><h4>📊 Analytics</h4><p class='muted'>Dashboards show hiring patterns, departments, approvals, and rejections.</p></div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+    col1, col2, col3 = st.columns([1, 1.1, 1])
     with col2:
-        st.markdown(
-            f"""
-            <div class='card'>
-              <h2 style='text-align:center;margin-bottom:0'>JW SEZ Digital HR Prototype</h2>
-              <p style='text-align:center;color:#6B7280'>Employee onboarding → HR review → employee database</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown("### Sign in")
+        st.markdown("<div class='card'><h2 style='text-align:center;margin-bottom:4px'>Sign in</h2><p style='text-align:center;color:#94A3B8!important'>Prototype access for employee, HR and admin roles</p></div>", unsafe_allow_html=True)
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         if st.button("Login", type="primary", use_container_width=True):
@@ -424,12 +438,7 @@ def login_screen():
                 st.rerun()
             else:
                 st.error("Invalid username or password")
-        st.info(
-            "Demo logins:\n\n"
-            "Employee: `employee.demo / employee1234`\n\n"
-            "HR: `hr.manager / hr1234`\n\n"
-            "Admin: `admin / admin1234`"
-        )
+        st.info("Demo logins:\n\nEmployee: `employee.demo / employee1234`\n\nHR: `hr.manager / hr1234`\n\nAdmin: `admin / admin1234`")
 
 
 def employee_portal():
@@ -651,25 +660,85 @@ def analytics_dashboard(apps: pd.DataFrame, employees: pd.DataFrame) -> None:
     st.write(f"Approval rate: **{approval_rate}%** · Rejection rate: **{rejection_rate}%** · Pending reviews: **{pending}**")
 
 
+
+def show_employee_profile(application_id: int):
+    conn = get_conn()
+    app = conn.execute("SELECT * FROM onboarding_applications WHERE id=?", (application_id,)).fetchone()
+    emp = conn.execute("SELECT * FROM employees WHERE application_id=?", (application_id,)).fetchone()
+    docs = conn.execute("SELECT document_type, original_filename, uploaded_at FROM documents WHERE application_id=? ORDER BY uploaded_at DESC", (application_id,)).fetchall()
+    conn.close()
+    if not app:
+        st.warning("No profile found for this record.")
+        return
+    app=dict(app)
+    emp=dict(emp) if emp else {}
+    status_class={"Pending":"pending","Approved":"approved","Rejected":"rejected","Changes Requested":"changes","Draft":"pending"}.get(app.get("status"),"pending")
+    st.markdown(f"""
+    <div class='card'>
+      <h3>{app.get('full_name','Employee Profile')}</h3>
+      <p class='muted'>Application APP-{application_id:05d} · Employee Code: <b>{emp.get('employee_code','Not assigned')}</b> · <span class='status {status_class}'>{app.get('status','Unknown')}</span></p>
+    </div>
+    """, unsafe_allow_html=True)
+    c1,c2,c3,c4=st.columns(4)
+    c1.metric("Department", app.get("department") or "—")
+    c2.metric("Designation", app.get("designation") or "—")
+    c3.metric("Joining Date", app.get("joining_date") or "—")
+    c4.metric("Employee Status", emp.get("status","Not active"))
+    t1,t2,t3=st.tabs(["Personal Details","Documents","HR Notes"])
+    with t1:
+        rows=[]
+        for f in ["full_name","father_name","cnic","date_of_birth","gender","marital_status","phone","email","address","emergency_contact_name","emergency_contact_phone","education","institute","bank_name","account_title","account_number"]:
+            rows.append({"Field":f.replace('_',' ').title(),"Value":app.get(f) or "—"})
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    with t2:
+        if docs:
+            st.dataframe(pd.DataFrame([dict(d) for d in docs]), use_container_width=True, hide_index=True)
+        else:
+            st.caption("No uploaded documents found for this profile.")
+    with t3:
+        st.write(app.get("hr_notes") or "No HR notes yet.")
+        st.caption(f"Submitted: {app.get('submitted_at') or '—'} · Reviewed: {app.get('reviewed_at') or '—'}")
+
+
 def employee_database_view():
     employees_full = get_employee_master_df()
-    st.markdown("### All Employees / Applications Data")
-    st.caption("HR and Admin can see all submitted applications, approved employees, rejected applications, and pending records here.")
+    st.markdown("### Employee Database & Application Records")
+    st.caption("HR and Admin can view approved employees, rejected applications, pending onboarding, and changes requested from one place.")
     if employees_full.empty:
         st.info("No employee/application records yet.")
         return
-    search = st.text_input("Search by name, CNIC, department, designation, or status")
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Total Records", len(employees_full))
+    c2.metric("Approved Employees", int((employees_full["application_status"] == "Approved").sum()))
+    c3.metric("Pending", int((employees_full["application_status"] == "Pending").sum()))
+    c4.metric("Rejected", int((employees_full["application_status"] == "Rejected").sum()))
+
+    col1, col2, col3 = st.columns([2,1,1])
+    search = col1.text_input("Search", placeholder="Name, CNIC, department, designation, status...")
+    status_options = ["All"] + sorted([x for x in employees_full["application_status"].dropna().unique().tolist()])
+    dept_options = ["All"] + sorted([x for x in employees_full["department"].fillna("Unknown").unique().tolist()])
+    status_filter = col2.selectbox("Status", status_options)
+    dept_filter = col3.selectbox("Department", dept_options)
+
     filtered = employees_full.copy()
+    if status_filter != "All":
+        filtered = filtered[filtered["application_status"] == status_filter]
+    if dept_filter != "All":
+        filtered = filtered[filtered["department"].fillna("Unknown") == dept_filter]
     if search.strip():
         mask = filtered.astype(str).apply(lambda col: col.str.contains(search, case=False, na=False)).any(axis=1)
         filtered = filtered[mask]
+
     st.dataframe(filtered, use_container_width=True, hide_index=True)
-    st.download_button(
-        "Download Complete HR Data CSV",
-        filtered.to_csv(index=False).encode("utf-8"),
-        "jw_sez_complete_hr_data.csv",
-        "text/csv",
-    )
+    st.download_button("Download Filtered HR Data CSV", filtered.to_csv(index=False).encode("utf-8"), "jw_sez_hr_filtered_data.csv", "text/csv")
+
+    if not filtered.empty:
+        st.markdown("### Employee / Application Profile")
+        choices = [f"APP-{int(r.application_id):05d} · {r.full_name} · {r.application_status}" for _, r in filtered.iterrows()]
+        selected_label = st.selectbox("Open a profile", choices)
+        selected_id = int(selected_label.split("·")[0].replace("APP-", ""))
+        show_employee_profile(selected_id)
 
 
 def hr_portal():
