@@ -13,6 +13,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -20,11 +21,14 @@ DB_PATH = BASE_DIR / "jw_sez_hr_prototype.db"
 UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-PRIMARY = "#23395B"
-ACCENT = "#B88A44"
-BG = "#F6F8FB"
-GREEN = "#1F7A4D"
-RED = "#B23B3B"
+PRIMARY = "#2563EB"
+ACCENT = "#F59E0B"
+BG = "#0F172A"
+CARD = "#111827"
+TEXT = "#E5E7EB"
+MUTED = "#9CA3AF"
+GREEN = "#22C55E"
+RED = "#EF4444"
 
 
 # ----------------------------- DATABASE ---------------------------------
@@ -154,6 +158,57 @@ def init_db() -> None:
                 "INSERT INTO users (username,password_hash,full_name,email,role,created_at) VALUES (?,?,?,?,?,?)",
                 (username, hash_password(password), full_name, email, role, now()),
             )
+
+    # Seed realistic demo data for HR/Admin analytics
+    cur.execute("SELECT COUNT(*) AS c FROM onboarding_applications WHERE cnic LIKE 'SAMPLE-%'")
+    if cur.fetchone()["c"] == 0:
+        sample_rows = [
+            ("sample.ali", "Ali Raza", "SAMPLE-001", "IT", "Software Intern", "Approved", "2026-01-08", "2026-01-10"),
+            ("sample.sara", "Sara Khan", "SAMPLE-002", "HR", "HR Assistant", "Approved", "2026-02-05", "2026-02-07"),
+            ("sample.usman", "Usman Ahmed", "SAMPLE-003", "Supply Chain", "Supply Chain Officer", "Rejected", "2026-02-18", "2026-02-19"),
+            ("sample.ayesha", "Ayesha Malik", "SAMPLE-004", "Finance", "Accounts Trainee", "Approved", "2026-03-03", "2026-03-05"),
+            ("sample.bilal", "Bilal Hussain", "SAMPLE-005", "Processing", "Processing Supervisor", "Pending", "2026-03-19", None),
+            ("sample.hina", "Hina Shah", "SAMPLE-006", "Operations", "Operations Coordinator", "Approved", "2026-04-11", "2026-04-13"),
+            ("sample.omar", "Omar Farooq", "SAMPLE-007", "Admin", "Admin Officer", "Changes Requested", "2026-05-02", "2026-05-03"),
+            ("sample.zain", "Zain Iqbal", "SAMPLE-008", "IT", "Data Analyst", "Approved", "2026-06-14", "2026-06-16"),
+            ("sample.noor", "Noor Fatima", "SAMPLE-009", "Supply Chain", "Procurement Intern", "Rejected", "2026-06-22", "2026-06-23"),
+        ]
+        for username, full_name, cnic, dept, desig, status, submitted_at, reviewed_at in sample_rows:
+            email = f"{username}@jwsez.com"
+            cur.execute("SELECT id FROM users WHERE username=?", (username,))
+            row = cur.fetchone()
+            if row:
+                user_id = row["id"]
+            else:
+                cur.execute(
+                    "INSERT INTO users (username,password_hash,full_name,email,role,created_at) VALUES (?,?,?,?,?,?)",
+                    (username, hash_password("employee1234"), full_name, email, "employee", now()),
+                )
+                user_id = cur.lastrowid
+            cur.execute(
+                """
+                INSERT INTO onboarding_applications
+                (user_id, full_name, father_name, cnic, date_of_birth, gender, marital_status, phone, email, address,
+                 emergency_contact_name, emergency_contact_phone, education, institute, department, designation, joining_date,
+                 bank_name, account_title, account_number, signature_text, status, hr_notes, submitted_at, reviewed_at, reviewed_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """,
+                (user_id, full_name, "Demo Father", cnic, "2000-01-01", "Male", "Single", "03000000000", email, "Demo address",
+                 "Emergency Contact", "03111111111", "Bachelor's", "Demo Institute", dept, desig, submitted_at,
+                 "Demo Bank", full_name, "PK00DEMO0000000000", full_name, status,
+                 "Demo analytics record" if status != "Pending" else "", submitted_at + " 09:00:00",
+                 (reviewed_at + " 15:00:00") if reviewed_at else None, 2)
+            )
+            app_id = cur.lastrowid
+            if status == "Approved":
+                cur.execute(
+                    """
+                    INSERT OR IGNORE INTO employees
+                    (application_id,user_id,employee_code,full_name,cnic,phone,email,department,designation,joining_date,status,added_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    (app_id, user_id, f"JW-{app_id:05d}", full_name, cnic, "03000000000", email, dept, desig, submitted_at, "Active", reviewed_at + " 15:00:00"),
+                )
 
     conn.commit()
     conn.close()
@@ -303,20 +358,29 @@ init_db()
 st.markdown(
     f"""
     <style>
-    .stApp {{ background: {BG}; }}
+    .stApp {{ background: {BG}; color: {TEXT}; }}
     .block-container {{ padding-top: 1.3rem; }}
-    h1, h2, h3 {{ color: {PRIMARY}; }}
-    .topbar {{ background:{PRIMARY}; color:white; padding:18px 24px; border-radius:16px; margin-bottom:18px; }}
+    h1, h2, h3, h4, h5, h6, p, label, span, div {{ color: {TEXT} !important; }}
+    .topbar {{ background:linear-gradient(135deg,#111827,#1E3A8A); color:white; padding:18px 24px; border-radius:16px; margin-bottom:18px; border:1px solid #334155; }}
     .brand {{ font-size:24px; font-weight:800; }}
-    .subtitle {{ color:#DDE6F3; font-size:14px; margin-top:4px; }}
-    .card {{ background:white; padding:18px; border-radius:16px; border:1px solid #E6EAF0; box-shadow:0 8px 24px rgba(31,45,61,.06); }}
-    .metric-title {{ color:#6B7280; font-size:13px; }}
-    .metric-value {{ color:{PRIMARY}; font-size:30px; font-weight:800; }}
+    .subtitle {{ color:#DDE6F3 !important; font-size:14px; margin-top:4px; }}
+    .card {{ background:{CARD}; padding:18px; border-radius:16px; border:1px solid #374151; box-shadow:0 8px 24px rgba(0,0,0,.20); }}
+    .metric-title {{ color:{MUTED} !important; font-size:13px; }}
+    .metric-value {{ color:#93C5FD !important; font-size:30px; font-weight:800; }}
     .status {{ padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }}
-    .pending {{ background:#FFF2CC; color:#7A5A00; }}
-    .approved {{ background:#DCFCE7; color:#166534; }}
-    .rejected {{ background:#FEE2E2; color:#991B1B; }}
-    .changes {{ background:#E0E7FF; color:#3730A3; }}
+    .pending {{ background:#78350F; color:#FDE68A !important; }}
+    .approved {{ background:#064E3B; color:#A7F3D0 !important; }}
+    .rejected {{ background:#7F1D1D; color:#FECACA !important; }}
+    .changes {{ background:#312E81; color:#C7D2FE !important; }}
+    [data-testid="stSidebar"] {{ background-color:#111827; }}
+    [data-testid="stSidebar"] * {{ color:#F9FAFB !important; }}
+    .stTextInput input, .stTextArea textarea, .stDateInput input, .stNumberInput input {{ background-color:#1F2937 !important; color:#F9FAFB !important; border:1px solid #4B5563 !important; border-radius:10px !important; }}
+    div[data-baseweb="select"] > div {{ background-color:#1F2937 !important; border:1px solid #4B5563 !important; border-radius:10px !important; }}
+    div[data-baseweb="select"] * {{ color:#F9FAFB !important; }}
+    .stButton button {{ background-color:#2563EB !important; color:white !important; border-radius:10px !important; border:none !important; font-weight:700; }}
+    .stButton button:hover {{ background-color:#1D4ED8 !important; }}
+    [data-testid="stDataFrame"], [data-testid="stMetric"] {{ background-color:{CARD} !important; border-radius:14px; }}
+    .stAlert {{ background-color:#1F2937 !important; color:#F9FAFB !important; }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -507,19 +571,122 @@ def application_detail(app_id: int):
         st.rerun()
 
 
+
+def get_employee_master_df() -> pd.DataFrame:
+    """Full employee/application view for HR and Admin."""
+    return read_df(
+        """
+        SELECT
+            a.id AS application_id,
+            COALESCE(e.employee_code, 'Not assigned') AS employee_code,
+            a.full_name,
+            a.cnic,
+            a.phone,
+            a.email,
+            a.department,
+            a.designation,
+            a.joining_date,
+            a.status AS application_status,
+            COALESCE(e.status, 'Not active employee') AS employee_status,
+            a.submitted_at,
+            a.reviewed_at,
+            a.hr_notes
+        FROM onboarding_applications a
+        LEFT JOIN employees e ON e.application_id = a.id
+        ORDER BY a.id DESC
+        """
+    )
+
+
+def analytics_dashboard(apps: pd.DataFrame, employees: pd.DataFrame) -> None:
+    st.markdown("### Hiring Analytics")
+    if apps.empty:
+        st.info("No onboarding data yet. Submit a few forms to generate analytics.")
+        return
+
+    apps2 = apps.copy()
+    apps2["submitted_date"] = pd.to_datetime(apps2["submitted_at"], errors="coerce")
+    apps2["month"] = apps2["submitted_date"].dt.strftime("%b %Y")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        status_counts = apps2["status"].fillna("Unknown").value_counts().reset_index()
+        status_counts.columns = ["Status", "Count"]
+        fig = px.pie(status_counts, names="Status", values="Count", title="Application Status Mix", hole=0.35)
+        fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig, use_container_width=True)
+
+    with c2:
+        dept_counts = apps2["department"].fillna("Unknown").value_counts().reset_index()
+        dept_counts.columns = ["Department", "Applications"]
+        fig = px.bar(dept_counts, x="Department", y="Applications", title="Applications by Department")
+        fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig, use_container_width=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        monthly = apps2.dropna(subset=["submitted_date"]).groupby("month", sort=False).size().reset_index(name="Applications")
+        fig = px.line(monthly, x="month", y="Applications", markers=True, title="Monthly Hiring Pipeline")
+        fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_title="Month")
+        st.plotly_chart(fig, use_container_width=True)
+
+    with c2:
+        rejected = apps2[apps2["status"].eq("Rejected")]
+        if rejected.empty:
+            st.info("No rejected applications yet.")
+        else:
+            rej_dept = rejected["department"].fillna("Unknown").value_counts().reset_index()
+            rej_dept.columns = ["Department", "Rejections"]
+            fig = px.bar(rej_dept, x="Department", y="Rejections", title="Rejections by Department")
+            fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("### Quick Analysis")
+    total = len(apps2)
+    approved = int((apps2["status"] == "Approved").sum())
+    rejected_count = int((apps2["status"] == "Rejected").sum())
+    pending = int((apps2["status"] == "Pending").sum())
+    approval_rate = round((approved / total) * 100, 1) if total else 0
+    rejection_rate = round((rejected_count / total) * 100, 1) if total else 0
+    st.write(f"Approval rate: **{approval_rate}%** · Rejection rate: **{rejection_rate}%** · Pending reviews: **{pending}**")
+
+
+def employee_database_view():
+    employees_full = get_employee_master_df()
+    st.markdown("### All Employees / Applications Data")
+    st.caption("HR and Admin can see all submitted applications, approved employees, rejected applications, and pending records here.")
+    if employees_full.empty:
+        st.info("No employee/application records yet.")
+        return
+    search = st.text_input("Search by name, CNIC, department, designation, or status")
+    filtered = employees_full.copy()
+    if search.strip():
+        mask = filtered.astype(str).apply(lambda col: col.str.contains(search, case=False, na=False)).any(axis=1)
+        filtered = filtered[mask]
+    st.dataframe(filtered, use_container_width=True, hide_index=True)
+    st.download_button(
+        "Download Complete HR Data CSV",
+        filtered.to_csv(index=False).encode("utf-8"),
+        "jw_sez_complete_hr_data.csv",
+        "text/csv",
+    )
+
+
 def hr_portal():
     st.subheader("HR Review Portal")
-    apps = read_df("SELECT id, full_name, cnic, department, designation, status, submitted_at FROM onboarding_applications ORDER BY id DESC")
+    apps = read_df("SELECT id, full_name, cnic, department, designation, status, submitted_at, reviewed_at FROM onboarding_applications ORDER BY id DESC")
     employees = read_df("SELECT * FROM employees ORDER BY id DESC")
     pending_count = int((apps["status"] == "Pending").sum()) if not apps.empty else 0
     approved_count = int((apps["status"] == "Approved").sum()) if not apps.empty else 0
+    rejected_count = int((apps["status"] == "Rejected").sum()) if not apps.empty else 0
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("Pending Review", pending_count)
-    c2.metric("Approved Applications", approved_count)
-    c3.metric("Existing Employees", len(employees))
+    c2.metric("Approved", approved_count)
+    c3.metric("Rejected", rejected_count)
+    c4.metric("Active Employees", len(employees))
 
-    tab1, tab2, tab3 = st.tabs(["Pending / Submitted Forms", "Existing Employees Database", "Audit Log"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Review Forms", "All Employees Data", "Analytics", "Audit Log"])
     with tab1:
         if apps.empty:
             st.info("No applications yet. Login as employee.demo and submit a form first.")
@@ -534,53 +701,57 @@ def hr_portal():
                 application_detail(st.session_state.selected_app_id)
 
     with tab2:
-        st.markdown("These are only the employees whose onboarding forms were approved by HR.")
-        if employees.empty:
-            st.info("No approved employees yet.")
-        else:
-            st.dataframe(employees, use_container_width=True, hide_index=True)
-            st.download_button(
-                "Download Employees CSV",
-                employees.to_csv(index=False).encode("utf-8"),
-                "jw_sez_employees.csv",
-                "text/csv",
-            )
+        employee_database_view()
 
     with tab3:
+        analytics_dashboard(apps, employees)
+
+    with tab4:
         logs = read_df("SELECT username, action, details, timestamp FROM audit_log ORDER BY id DESC LIMIT 100")
         st.dataframe(logs, use_container_width=True, hide_index=True)
 
-
 def admin_portal():
     st.subheader("Admin Panel")
-    users = read_df("SELECT id, username, full_name, email, role, is_active, created_at FROM users ORDER BY id")
-    st.dataframe(users, use_container_width=True, hide_index=True)
-    st.markdown("### Create Employee / HR Account")
-    with st.form("create_user"):
-        c1, c2 = st.columns(2)
-        username = c1.text_input("Username")
-        full_name = c2.text_input("Full Name")
-        c1, c2, c3 = st.columns(3)
-        email = c1.text_input("Email")
-        role = c2.selectbox("Role", ["employee", "hr", "admin"])
-        password = c3.text_input("Temporary Password", type="password")
-        submitted = st.form_submit_button("Create Account", type="primary")
-    if submitted:
-        if not username or not full_name or not password:
-            st.error("Username, full name and password are required.")
-        else:
-            try:
-                conn = get_conn()
-                conn.execute(
-                    "INSERT INTO users (username,password_hash,full_name,email,role,created_at) VALUES (?,?,?,?,?,?)",
-                    (username, hash_password(password), full_name, email, role, now()),
-                )
-                conn.commit(); conn.close()
-                audit("CREATED_USER", f"{username} ({role})")
-                st.success(f"Created {role} account: {username}")
-                st.rerun()
-            except sqlite3.IntegrityError:
-                st.error("That username already exists.")
+    apps = read_df("SELECT id, full_name, cnic, department, designation, status, submitted_at, reviewed_at FROM onboarding_applications ORDER BY id DESC")
+    employees = read_df("SELECT * FROM employees ORDER BY id DESC")
+
+    tab1, tab2, tab3, tab4 = st.tabs(["Users", "All Employees Data", "Analytics", "Audit Log"])
+    with tab1:
+        users = read_df("SELECT id, username, full_name, email, role, is_active, created_at FROM users ORDER BY id")
+        st.dataframe(users, use_container_width=True, hide_index=True)
+        st.markdown("### Create Employee / HR Account")
+        with st.form("create_user"):
+            c1, c2 = st.columns(2)
+            username = c1.text_input("Username")
+            full_name = c2.text_input("Full Name")
+            c1, c2, c3 = st.columns(3)
+            email = c1.text_input("Email")
+            role = c2.selectbox("Role", ["employee", "hr", "admin"])
+            password = c3.text_input("Temporary Password", type="password")
+            submitted = st.form_submit_button("Create Account", type="primary")
+        if submitted:
+            if not username or not full_name or not password:
+                st.error("Username, full name and password are required.")
+            else:
+                try:
+                    conn = get_conn()
+                    conn.execute(
+                        "INSERT INTO users (username,password_hash,full_name,email,role,created_at) VALUES (?,?,?,?,?,?)",
+                        (username, hash_password(password), full_name, email, role, now()),
+                    )
+                    conn.commit(); conn.close()
+                    audit("CREATED_USER", f"{username} ({role})")
+                    st.success(f"Created {role} account: {username}")
+                    st.rerun()
+                except sqlite3.IntegrityError:
+                    st.error("That username already exists.")
+    with tab2:
+        employee_database_view()
+    with tab3:
+        analytics_dashboard(apps, employees)
+    with tab4:
+        logs = read_df("SELECT username, action, details, timestamp FROM audit_log ORDER BY id DESC LIMIT 200")
+        st.dataframe(logs, use_container_width=True, hide_index=True)
 
 
 if "user" not in st.session_state:
